@@ -1,0 +1,234 @@
+﻿@page "/currentSong"
+@using SL.Controllers.Controllers;
+@using SL.Entities.Entities;
+
+@inject SongController _songController;
+
+<style>
+	.spotify-card{
+		background-color: black;
+		border-radius: 20px;
+		width: 90%;
+		height: 25em;
+	}
+
+	.btn-spotify-player{
+		opacity: 0;
+	}
+
+	.inside-text {
+		color: #979fa1;
+		margin: 8px;
+	}
+
+	.img_container {
+		text-align: center;
+		align-content: center;
+	}
+
+	.img_container span {
+		display: grid;
+		position: relative;
+		color: #979fa1;
+		width: 60px;
+		height: 60px;
+		align-items: center;
+	}
+	.img_container span:hover{
+		color: white;
+	}
+
+	.img_container img {
+		position: relative;
+		margin-top: 10px;
+		margin-right: 10px;
+		margin-bottom: 10px;
+		border-radius: 18px;
+	}
+
+	.img_container > p {
+		position: relative;
+	}
+	
+	.progress-bar{
+		position: relative;
+		justify-content:center;
+		background: black;
+		width: 400px;
+		height: 20px;
+		border-radius: 5px;
+	}
+
+	.progress-bar div{
+		width: 50%;
+		height: 10px;
+		border-radius: 5px;
+		background: white;
+	}
+
+	.progress-bar div span{
+		position: relative;
+		top: -5px;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background: red;
+		float: right;
+		bottom: 5px;
+		color: #333;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+</style>
+
+<PageTitle>Current Song Playing</PageTitle>
+<div class="container-fluid align-content-center" style="width: 85%;">
+	<div class="container-fluid spotify-card">
+		<div class="img_container justify-content-evenly">
+			<img src="@image" alt="" width="200" />
+			<p><h2 class="inside-text">@currentSong</h2></p>
+		</div>
+		<div class="justify-content-center d-flex img_container">
+			<span class="fa-solid fa-backward-step fa-2xl" @onclick="GoToPrevious"></span>
+			@if (isPlaying)
+			{
+				<span id="pause" class="fa-solid fa-pause fa-2xl" @onclick="ChangePlayState"></span>
+			}
+			else
+			{
+				<span id="play" class="fa-solid fa-play fa-2xl" @onclick="ChangePlayState"></span>
+			}
+			<span class="fa-solid fa-forward-step fa-2xl" @onclick="GoToNex"></span>
+		</div>
+		
+		<div id="progress-bar" class="progress-bar">
+			<div style="
+				 position: relative;
+				 background: #979fa1;
+				 width: 400px;
+				 height: 10px;
+				 border-radius: 5px;">
+
+				<div class="html">
+					<span>86%</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+@code {
+	private Timer _timer;
+	private string currentSong = "Loading...";
+	private bool isPlaying = true;
+	private string image = string.Empty;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var player = await _songController.GetCurrentPlayer();
+		
+		if (player is not null)
+		{
+			try
+			{
+				image = player.Item.Album.Images.FirstOrDefault().Url;
+				currentSong = player.Item.name;
+				isPlaying = player.Is_playing;
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentNullException(ex.Message);
+			}
+		}
+		else
+		{
+			isPlaying = false;
+			currentSong = "No song is currently playing";
+		}
+
+		StartRefreshTimer();
+	}
+	private void StartRefreshTimer()
+	{
+		_timer = new Timer(
+			RefreshContent, 
+			null, 
+			TimeSpan.Zero, 
+			TimeSpan.FromSeconds(3));
+	}
+
+	private async void RefreshContent(object state)
+	{
+		var player = await _songController.GetCurrentPlayer();
+		TryChangeImageAndText(player);
+		isPlaying = player.Is_playing;
+		await InvokeAsync(StateHasChanged);
+	}
+
+	protected async void Render()
+	{
+		//API delay to refresh the Player
+		await Task.Delay(1000);
+		var player = await _songController.GetCurrentPlayer();
+
+
+		if (player is not null)
+		{
+			TryChangeImageAndText(player);
+		}
+		else
+		{
+			isPlaying = false;
+			currentSong = "No song is currently playing";
+		}
+		await InvokeAsync(StateHasChanged);
+	}
+
+	private void ChangePlayState()
+	{
+		_songController.ChangeSongStatus(isPlaying);
+		isPlaying = !isPlaying;
+		Render();
+	}
+
+	private async void GoToNex()
+	{
+		await _songController.NextSong();
+		Render();
+	}
+
+	private async void GoToPrevious()
+	{
+		await _songController.PreviousSong();
+		Render();
+	}
+
+	private async void TryChangeImageAndText(Player player)
+	{
+		var img = player.Item.Album.Images.FirstOrDefault();
+		try
+		{
+			if (img is not null)
+			{
+				image = img.Url;
+			}
+			currentSong = player.Item.name;
+		}
+		catch (Exception ex)
+		{
+			throw new ArgumentNullException(ex.Message);
+		}
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		if (_timer != null)
+		{
+			_timer.Dispose();
+			await Task.CompletedTask;
+		}
+	}
+}

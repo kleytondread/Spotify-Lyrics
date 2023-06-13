@@ -1,0 +1,56 @@
+﻿@page "/"
+
+@using Controllers.Controllers
+@using SL.Entities.DTOs
+
+@inject SpotifyOAuthController _spotifyOAuth;
+@inject NavigationManager _navigation;
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+<br /><br />
+<button class="btn btn-primary py-3 px-3" @onclick="StartSpotifyAuthorization">
+	Connect with Spotify
+</button>
+
+<button class="btn btn-secondary" @onclick="GetProfile">
+	Get Id
+</button>
+<span id="avatar"></span>
+<li>User name: <span id="id" role="status">@userName</span></li>
+<li>Link: <a id="url" href=@spotifyLink role="status">@spotifyLink</a></li>
+<li role="status">Email: @email</li>
+
+
+@code{
+	private string userName = "";
+	private string spotifyLink = "";
+	private string email = "";
+
+	private void StartSpotifyAuthorization()
+	{
+		var urlRedirect = _spotifyOAuth.StartSpotifyAuthorization();
+		_navigation.NavigateTo(urlRedirect);
+	}
+
+	private async void GetProfile()	
+	{
+		UserProfileDTO profile = null;
+		try
+		{
+			profile = await _spotifyOAuth.GetProfile();
+			userName = profile.display_name;
+			spotifyLink = profile.external_urls.spotify;
+			email = profile.email;
+
+			InvokeAsync(StateHasChanged);
+		}
+		catch (Exception)
+		{
+			StartSpotifyAuthorization();
+		}
+	}
+}

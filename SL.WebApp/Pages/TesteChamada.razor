@@ -1,0 +1,20 @@
+﻿@page "/testeChamada"
+
+@using Controllers.Controllers
+
+@inject SongController _songController;
+
+<h3>TesteChamada</h3>
+<button class="btn btn-primary" @onclick="TesteChamadaController">click</button>
+<p> retorno: @retorno</p>
+
+
+@code {
+	string retorno;
+	
+	private void TesteChamadaController()
+	{
+		//retorno = _songController.TesteDI();
+
+	}
+}

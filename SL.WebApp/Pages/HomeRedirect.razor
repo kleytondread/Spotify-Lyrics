@@ -1,0 +1,21 @@
+﻿@page "/home"
+@using Microsoft.AspNetCore.WebUtilities;
+@using SL.Controllers.Controllers;
+
+@inject NavigationManager _navigation;
+@inject SpotifyOAuthController _spotifyOAuth;
+
+@code {
+	protected override void OnAfterRender(bool firstRender)
+	{
+		var uri = new Uri(_navigation.Uri);
+		var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+		var code = queryParams["code"];
+		var state = queryParams["state"];
+
+		_spotifyOAuth.FinalizeAuthentication(code, state);
+
+		_navigation.NavigateTo("/");
+	}
+}
