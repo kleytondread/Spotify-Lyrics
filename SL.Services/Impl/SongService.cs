@@ -35,27 +35,6 @@ public class SongService : ISongService
 		return player!;
 	}
 
-	private Player CreateNewPlayerInstance()
-	{
-		var album = new Album()
-		{
-			Images = new Image[]{new Image { Url = string.Empty}}
-		};
-		var song = new Song()
-		{
-			name = "No song is current playing",
-			Album = album
-		};
-		var player = new Player()
-		{
-			Is_playing = false,
-			Item = song
-		};
-
-		return player;
-	}
-
-	//TODO
 	public string GetSong()
         {
             return _songRepository.teste();
@@ -140,5 +119,25 @@ public class SongService : ISongService
 	private Task<string> GetAccessToken()
 	{
 		return _spotifyOAuth.GetAccessToken();
+	}
+
+	private Player CreateNewPlayerInstance()
+	{
+		var album = new Album()
+		{
+			Images = new Image[] { new Image { Url = string.Empty } }
+		};
+		var song = new Song()
+		{
+			name = "No song is current playing",
+			Album = album
+		};
+		var player = new Player()
+		{
+			Is_playing = false,
+			Item = song
+		};
+
+		return player;
 	}
 }
